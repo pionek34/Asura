@@ -1,0 +1,15 @@
+plugins {
+    id 'java'
+}
+
+group 'dev.lastknell'
+version 'v1.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation group: 'io.netty', name: 'netty-all', version: '4.1.84.Final'
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.24'
+}
