@@ -5,14 +5,12 @@ plugins {
 group 'dev.lastknell'
 version 'v1.0'
 
-sourceCompatibility = 11
-targetCompatibility = 11
-
 repositories {
     mavenCentral()
 }
 
 dependencies {
     implementation group: 'io.netty', name: 'netty-all', version: '4.1.84.Final'
-    compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.24'
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
 }
