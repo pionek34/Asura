@@ -2,7 +2,6 @@ package dev.lastknell.core;
 
 import dev.lastknell.core.methods.IMethod;
 import io.netty.channel.socket.SocketChannel;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 public class AttackConfig {

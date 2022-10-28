@@ -13,6 +13,6 @@ public interface IMethod {
      * @return get Method description / know what method dose
      */
     public String getDesc();
-    
+
     public boolean isExperimental();
 }

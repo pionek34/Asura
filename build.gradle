@@ -5,6 +5,20 @@ plugins {
 group 'dev.lastknell'
 version 'v1.0'
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+task fatJar(type: Jar) {
+	manifest {
+        attributes 'Implementation-Title': 'Asura',  
+        	'Implementation-Version': version
+    }
+    baseName = project.name + '-with-all-dependencies'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+
 repositories {
     mavenCentral()
 }

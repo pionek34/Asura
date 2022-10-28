@@ -223,6 +223,7 @@ public class NettyBootstrap {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                 }
+                totalCPS += successfulCPS;
                 oppnedCPS = 0;
                 successfulCPS = 0;
                 triedCPS = 0;
