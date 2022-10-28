@@ -52,12 +52,12 @@ public class ProxyScraper {
         Proxy p = null;
         String[] parts = line.split(":");
         if (parts.length == 2) {
-            if (isValidIPAddress(parts[0]) && Integer.parseInt(parts[2]) < 65535 && Integer.parseInt(parts[2]) > 0) {
+            if (isValidIPAddress(parts[0]) && Integer.parseInt(parts[1]) < 65535 && Integer.parseInt(parts[1]) > 0) {
                 p = new Proxy(new InetSocketAddress(parts[0], Integer.parseInt(parts[1])));
             }
         }
         if (parts.length == 4) {
-            if (isValidIPAddress(parts[0]) && Integer.parseInt(parts[2]) < 65535 && Integer.parseInt(parts[2]) > 0) {
+            if (isValidIPAddress(parts[0]) && Integer.parseInt(parts[1]) < 65535 && Integer.parseInt(parts[1]) > 0) {
                 p = new Proxy(new InetSocketAddress(parts[0], Integer.parseInt(parts[1])), parts[2], parts[3]);
             }
         }

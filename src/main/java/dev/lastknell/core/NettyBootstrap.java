@@ -166,28 +166,11 @@ public class NettyBootstrap {
             ctx.close();
         }
     };
-    // NO PROXY
-    private final ChannelInitializer<Channel> NO_PROXY = new ChannelInitializer<Channel>() {
-
-        public void channelInactive(ChannelHandlerContext ctx) {
-            ctx.channel().close();
-        }
-
-        @Override
-        protected void initChannel(Channel ch) throws Exception {
-            method.accept(ch, null);
-        }
-
-        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-            ctx.close();
-        }
-        
-    };
-
+    
     // BOOTSTRAP
     private final Bootstrap BOOTSTRAP = (new Bootstrap()).channel(sClass).group(GROUP)
             .option(ChannelOption.TCP_NODELAY, Boolean.TRUE).option(ChannelOption.AUTO_READ, Boolean.TRUE)
-            .handler((this.proxyType == 0) ? NO_PROXY
+            .handler((this.proxyType == 0) ? TAIL
                     : ((this.proxyType == 1) ? SOCKS5 : ((this.proxyType == 2) ? SOCKS4 : HTTP)));
 
     /**
