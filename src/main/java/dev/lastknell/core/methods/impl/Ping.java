@@ -4,24 +4,25 @@ import dev.lastknell.core.NettyBootstrap;
 import dev.lastknell.core.methods.IMethod;
 import dev.lastknell.core.packets.PingPacket;
 import dev.lastknell.core.proxy.Proxy;
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 
 public class Ping implements IMethod{
 
     private PingPacket packet;
+    private NettyBootstrap service;
 
     @Override
     public void accept(Channel channel, Proxy proxy) {
-        ByteBuf b = Unpooled.buffer();
-        packet.write(b);
-        channel.writeAndFlush(b);
+        service.oppnedCPS++;
+        channel.writeAndFlush(Unpooled.buffer().writeBytes(packet.getWrappedPacket()));
         channel.close();
+        service.successfulCPS++;
     }
 
     @Override
     public void init(NettyBootstrap service) {
+        this.service = service;
     }
 
     @Override
