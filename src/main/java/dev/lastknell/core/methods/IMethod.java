@@ -8,7 +8,7 @@ public interface IMethod {
 
     public void accept(Channel channel, Proxy proxy);
 
-    public void setService(NettyBootstrap service);
+    public void init(NettyBootstrap service);
 
     public String getName();
 

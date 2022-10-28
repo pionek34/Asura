@@ -21,7 +21,7 @@ public class Ping implements IMethod{
     }
 
     @Override
-    public void setService(NettyBootstrap service) {
+    public void init(NettyBootstrap service) {
     }
 
     @Override

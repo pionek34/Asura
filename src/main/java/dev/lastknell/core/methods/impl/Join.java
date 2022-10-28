@@ -16,10 +16,6 @@ public class Join implements IMethod {
   
     private volatile int i = 0;
 
-    public Join() {
-        handshake = new Handshake(service.protocolID, service.srvIp, service.port, 2);
-    }
-
     @Override
     public void accept(Channel channel, Proxy proxy) {
         service.oppnedCPS++;
@@ -44,8 +40,9 @@ public class Join implements IMethod {
     }
 
     @Override
-    public void setService(NettyBootstrap service) {
+    public void init(NettyBootstrap service) {
         this.service = service;
+        handshake = new Handshake(service.protocolID, service.srvIp, service.port, 2);
     }
     
 }

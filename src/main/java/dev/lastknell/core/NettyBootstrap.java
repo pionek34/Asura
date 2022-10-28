@@ -206,7 +206,7 @@ public class NettyBootstrap {
         this.sClass = attackConfig.getSClass();
         this.proxyManager = proxyManager;
         this.protocolID = attackConfig.getProtocolID();
-        this.method.setService(this);
+        this.method.init(this);
     }
 
     private ThreadFactory createThreadFactory(Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
