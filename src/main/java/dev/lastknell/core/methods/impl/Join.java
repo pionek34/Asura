@@ -5,6 +5,7 @@ import dev.lastknell.core.methods.IMethod;
 import dev.lastknell.core.packets.Handshake;
 import dev.lastknell.core.packets.LoginRequest;
 import dev.lastknell.core.proxy.Proxy;
+import dev.lastknell.core.utils.RandomUtils;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 
@@ -14,13 +15,11 @@ public class Join implements IMethod {
 
     private Handshake handshake;
   
-    private volatile int i = 0;
-
     @Override
     public void accept(Channel channel, Proxy proxy) {
         service.oppnedCPS++;
         channel.writeAndFlush(Unpooled.buffer().writeBytes(handshake.getWrappedPacket()));
-        channel.writeAndFlush(Unpooled.buffer().writeBytes((new LoginRequest(String.valueOf(this.i++))).getWrappedPacket()));
+        channel.writeAndFlush(Unpooled.buffer().writeBytes((new LoginRequest(RandomUtils.randomString(8))).getWrappedPacket()));
         service.successfulCPS++;
     }
 

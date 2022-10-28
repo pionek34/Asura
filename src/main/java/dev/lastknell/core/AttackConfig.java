@@ -1,7 +1,6 @@
 package dev.lastknell.core;
 
 import dev.lastknell.core.methods.IMethod;
-import io.netty.channel.socket.SocketChannel;
 import lombok.Getter;
 
 public class AttackConfig {
@@ -15,7 +14,6 @@ public class AttackConfig {
     private @Getter int delay;
     private @Getter int loopThreads;
     private @Getter int workerThreads;
-    private @Getter Class<? extends SocketChannel> sClass;
     private @Getter int proxyType;
     
     /**
@@ -28,8 +26,7 @@ public class AttackConfig {
      * @param delay delay in looping threads
      * @param loopThreads loopThreads 
      * @param workerThreads nettyThreads 
-     * @param sClass socketChannel class NioSocketChannel or EpollSocketChannel
-     * @param proxyType 0: NONE, 1: SOCKS5, 2: SOCK4, 3: HTTP
+     * @param proxyType 0: SOCKS4 , 1 SOCKS5, 2: HTTP
      */
     public AttackConfig(String srvIp,
             int port,
@@ -40,7 +37,6 @@ public class AttackConfig {
             int delay,
             int loopThreads,
             int workerThreads,
-            Class<? extends SocketChannel> sClass,
             int proxyType) 
     {
         this.srvIp = srvIp;
@@ -52,7 +48,6 @@ public class AttackConfig {
         this.delay = delay;
         this.loopThreads = loopThreads;
         this.workerThreads = workerThreads;
-        this.sClass = sClass;
         this.proxyType = proxyType;
     }
 }
