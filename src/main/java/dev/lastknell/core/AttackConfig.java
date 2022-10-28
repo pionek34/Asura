@@ -9,6 +9,7 @@ public class AttackConfig {
     private @Getter IMethod method;
     private @Getter String srvIp;
     private @Getter int port;
+    private @Getter int protocolID;
     private @Getter int duration;
     private @Getter int perDelay;
     private @Getter int delay;
@@ -21,6 +22,7 @@ public class AttackConfig {
      * @param srvIp server ip resolved
      * @param port server port
      * @param method method duh!
+     * @param protocolID protocol for version
      * @param duration duration of attack
      * @param perDelay connections per delay
      * @param delay delay in looping threads
@@ -32,6 +34,7 @@ public class AttackConfig {
     public AttackConfig(String srvIp,
             int port,
             IMethod method,
+            int protocolID,
             int duration,
             int perDelay,
             int delay,
@@ -43,6 +46,7 @@ public class AttackConfig {
         this.srvIp = srvIp;
         this.port = port;
         this.method = method;
+        this.protocolID = protocolID;
         this.duration = duration;
         this.perDelay = perDelay;
         this.delay = delay;

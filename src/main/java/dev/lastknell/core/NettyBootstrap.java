@@ -29,8 +29,8 @@ import io.netty.util.ResourceLeakDetector;
 public class NettyBootstrap {
 
     // Attack Config
-    private String srvIp;
-    private int port;
+    public String srvIp;
+    public int port;
     private IMethod method;
     private int duration;
     private int perDelay;
@@ -38,10 +38,11 @@ public class NettyBootstrap {
     private int loopThreads;
     private int workerThreads;
     private Class<? extends SocketChannel> sClass = NioSocketChannel.class;
-    private int proxyType = 0;
+    public int proxyType = 0;
+    public int protocolID;
 
     // IDK WHAT TO TYPE HERE
-    ProxyManager proxyManager;
+    private ProxyManager proxyManager;
     public volatile int triedCPS = 0;
     public volatile int oppnedCPS = 0;
     public volatile int successfulCPS = 0;
@@ -51,7 +52,7 @@ public class NettyBootstrap {
     private boolean shouldStop = false;
 
     // Netty related
-    public final EventLoopGroup GROUP = System.getProperty("os.name").toLowerCase().contains("win")
+    private final EventLoopGroup GROUP = System.getProperty("os.name").toLowerCase().contains("win")
             ? new NioEventLoopGroup(this.workerThreads, this.createThreadFactory((t, e) -> {
             }))
             : new EpollEventLoopGroup(this.workerThreads, this.createThreadFactory((t, e) -> {
@@ -105,7 +106,7 @@ public class NettyBootstrap {
         }
     };
     // SOCKS4
-    public final ChannelInitializer<Channel> SOCKS4 = new ChannelInitializer<Channel>() {
+    private final ChannelInitializer<Channel> SOCKS4 = new ChannelInitializer<Channel>() {
         public void channelInactive(ChannelHandlerContext ctx) {
             ctx.channel().close();
         }
@@ -166,15 +167,27 @@ public class NettyBootstrap {
         }
     };
     // NO PROXY
-    public final ChannelFutureListener NO_PROXY = c -> {
-        if (c.isSuccess())
-            method.accept(c.channel(), null);
+    private final ChannelInitializer<Channel> NO_PROXY = new ChannelInitializer<Channel>() {
+
+        public void channelInactive(ChannelHandlerContext ctx) {
+            ctx.channel().close();
+        }
+
+        @Override
+        protected void initChannel(Channel ch) throws Exception {
+            method.accept(ch, null);
+        }
+
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+            ctx.close();
+        }
+        
     };
 
     // BOOTSTRAP
-    public final Bootstrap BOOTSTRAP = (new Bootstrap()).channel(sClass).group(GROUP)
+    private final Bootstrap BOOTSTRAP = (new Bootstrap()).channel(sClass).group(GROUP)
             .option(ChannelOption.TCP_NODELAY, Boolean.TRUE).option(ChannelOption.AUTO_READ, Boolean.TRUE)
-            .handler((this.proxyType == 0) ? TAIL
+            .handler((this.proxyType == 0) ? NO_PROXY
                     : ((this.proxyType == 1) ? SOCKS5 : ((this.proxyType == 2) ? SOCKS4 : HTTP)));
 
     /**
@@ -192,10 +205,11 @@ public class NettyBootstrap {
         this.workerThreads = attackConfig.getWorkerThreads();
         this.sClass = attackConfig.getSClass();
         this.proxyManager = proxyManager;
-
+        this.protocolID = attackConfig.getProtocolID();
+        this.method.setService(this);
     }
 
-    public ThreadFactory createThreadFactory(Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
+    private ThreadFactory createThreadFactory(Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
         ThreadFactory threadFactory = Executors.defaultThreadFactory();
         AtomicLong atomicLong = new AtomicLong(0);
         return runnable -> {

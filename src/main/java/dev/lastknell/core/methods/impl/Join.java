@@ -10,23 +10,22 @@ import io.netty.channel.Channel;
 
 public class Join implements IMethod {
 
+    NettyBootstrap service;
+
     private Handshake handshake;
   
     private volatile int i = 0;
 
-    private NettyBootstrap nettyBootstrap;
-
-    public Join(NettyBootstrap nettyBootstrap) {
-        this.nettyBootstrap = nettyBootstrap;
-
+    public Join() {
+        handshake = new Handshake(service.protocolID, service.srvIp, service.port, 2);
     }
 
     @Override
     public void accept(Channel channel, Proxy proxy) {
-        nettyBootstrap.oppnedCPS++;
+        service.oppnedCPS++;
         channel.writeAndFlush(Unpooled.buffer().writeBytes(handshake.getWrappedPacket()));
         channel.writeAndFlush(Unpooled.buffer().writeBytes((new LoginRequest(String.valueOf(this.i++))).getWrappedPacket()));
-        nettyBootstrap.successfulCPS++;
+        service.successfulCPS++;
     }
 
     @Override
@@ -42,6 +41,11 @@ public class Join implements IMethod {
     @Override
     public boolean isExperimental() {
         return false;
+    }
+
+    @Override
+    public void setService(NettyBootstrap service) {
+        this.service = service;
     }
     
 }

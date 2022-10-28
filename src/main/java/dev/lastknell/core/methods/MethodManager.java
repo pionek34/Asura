@@ -2,6 +2,8 @@ package dev.lastknell.core.methods;
 
 import java.util.HashSet;
 
+import dev.lastknell.core.methods.impl.Join;
+import dev.lastknell.core.methods.impl.Ping;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -19,7 +21,8 @@ public class MethodManager {
     }
 
     private void registerPremade() {
-
+        methods.add(new Join());
+        methods.add(new Ping());
     }
 
     /**
