@@ -15,8 +15,8 @@ public class LoginRequest extends DefinedPacket {
         writeString(this.data, buf);
     }
 
-    public void writeC(ByteBuf buf) {
-        writeStringC(this.data, buf);
+    public void writeNoCap(ByteBuf buf) {
+        writeStringNoCap(this.data, buf);
     }
 
     public byte[] getWrappedPacket() {
