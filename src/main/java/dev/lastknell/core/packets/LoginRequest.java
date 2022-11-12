@@ -15,21 +15,21 @@ public class LoginRequest extends DefinedPacket {
         writeString(this.data, buf);
     }
 
-    public void writeNoCap(ByteBuf buf) {
-        writeStringNoCap(this.data, buf);
+    public void writeC(ByteBuf buf) {
+        writeStringC(this.data, buf);
     }
 
     public byte[] getWrappedPacket() {
         ByteBuf allocated = Unpooled.buffer();
         allocated.writeByte(0);
-        write(allocated);
+        this.write(allocated);
         ByteBuf wrapped = Unpooled.buffer();
         writeVarInt(allocated.readableBytes(), wrapped);
         wrapped.writeBytes(allocated);
         byte[] bytes = new byte[wrapped.readableBytes()];
-        wrapped.getBytes(0, bytes);
+        wrapped.getBytes(0, (byte[])bytes);
         wrapped.release();
         return bytes;
-    }
+     }
 
 }
