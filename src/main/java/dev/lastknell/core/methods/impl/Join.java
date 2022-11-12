@@ -22,7 +22,7 @@ public class Join implements IMethod {
         service.oppnedCPS++;
         ByteBuf handshakBuf = Unpooled.buffer(0).writeBytes(handshake.getWrappedPacket());
         channel.writeAndFlush(handshakBuf);
-        channel.writeAndFlush(Unpooled.buffer().writeBytes((new LoginRequest(RandomUtils.randomString(8)).getWrappedPacket())));
+        channel.writeAndFlush(Unpooled.buffer().writeBytes((new LoginRequest(RandomUtils.randomString(8)).getWrappedPacket())).release());
         service.successfulCPS++;
     }
 
