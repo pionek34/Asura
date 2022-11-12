@@ -14,7 +14,9 @@ public class AttackConfig {
     private @Getter int delay;
     private @Getter int loopThreads;
     private @Getter int workerThreads;
+    // 0 -> Socks4Proxy, 1 -> Socks5Proxy, 2 -> HttpProxy
     private @Getter int proxyType;
+    private @Getter boolean usingEpoll;
     
     /**
      * @param srvIp server ip resolved
@@ -37,7 +39,8 @@ public class AttackConfig {
             int delay,
             int loopThreads,
             int workerThreads,
-            int proxyType) 
+            int proxyType,
+            boolean usingEpoll) 
     {
         this.srvIp = srvIp;
         this.port = port;
@@ -49,5 +52,6 @@ public class AttackConfig {
         this.loopThreads = loopThreads;
         this.workerThreads = workerThreads;
         this.proxyType = proxyType;
+        this.usingEpoll = usingEpoll;
     }
 }

