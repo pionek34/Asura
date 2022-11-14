@@ -1,4 +1,5 @@
 # Asura
+ **A Framework to make minecraft botters**
 Join My Discord Server -> [Invite](https://dsc.gg/teamxd)
 
 ## TODOs:
