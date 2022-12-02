@@ -15,7 +15,7 @@ public class Ping implements IMethod {
 
     @Override
     public void accept(Channel channel, Proxy proxy) {
-        service.oppnedCPS++;
+        service.openedCPS++;
         channel.writeAndFlush(Unpooled.buffer().writeBytes(this.handshake));
         channel.writeAndFlush(Unpooled.buffer().writeBytes(new byte[] { 1, 0 }));
         channel.writeAndFlush(

@@ -1,12 +1,12 @@
 package dev.lastknell.core.packets;
 
+import io.netty.buffer.ByteBuf;
+
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
-import io.netty.buffer.ByteBuf;
 
 public abstract class DefinedPacket {
 
@@ -118,7 +118,7 @@ public abstract class DefinedPacket {
             byte in = input.readByte();
             out |= (in & Byte.MAX_VALUE) << bytes++ * 7;
             if (bytes > maxBytes)
-                throw new RuntimeException("OVERSIZED_VAR_INT_EXCEPTION");
+                throw new RuntimeException("OVERSIZE_VAR_INT_EXCEPTION");
             if ((in & 0x80) != 128)
                 return out;
         }

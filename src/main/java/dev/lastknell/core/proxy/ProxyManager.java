@@ -1,18 +1,15 @@
 package dev.lastknell.core.proxy;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ProxyManager {
 
-    private volatile List<Proxy> proxies = Collections.synchronizedList(new ArrayList<Proxy>());
+    private final CopyOnWriteArrayList<Proxy> proxies;
     private volatile int atIndex = 0;
 
-    /**
-     * @param proxies A list of PROXIES
-     */
     public ProxyManager(ArrayList<Proxy> proxies) {
+        this.proxies = new CopyOnWriteArrayList<>();
         this.proxies.addAll(proxies);
     }
 
@@ -26,7 +23,6 @@ public class ProxyManager {
     }
 
     public void removeProxy(Proxy proxy) {
-        proxies.remove(proxy);
+        this.proxies.remove(proxy);
     }
-
 }

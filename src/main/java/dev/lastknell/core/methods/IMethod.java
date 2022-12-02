@@ -6,16 +6,16 @@ import io.netty.channel.Channel;
 
 public interface IMethod {
 
-    public void accept(Channel channel, Proxy proxy);
+    void accept(Channel channel, Proxy proxy);
 
-    public void init(NettyBootstrap service);
+    void init(NettyBootstrap service);
 
-    public String getName();
+    String getName();
 
     /**
      * @return get Method description / know what method dose
      */
-    public String getDesc();
+    String getDesc();
 
-    public boolean isExperimental();
+    boolean isExperimental();
 }

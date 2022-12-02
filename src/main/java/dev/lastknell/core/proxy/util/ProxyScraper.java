@@ -1,4 +1,7 @@
-package dev.lastknell.core.proxy;
+package dev.lastknell.core.proxy.util;
+
+import dev.lastknell.core.proxy.Proxy;
+import lombok.Getter;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,23 +10,21 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import lombok.Getter;
-
 public class ProxyScraper {
 
-    private ArrayList<URL> urls = new ArrayList<URL>();
-    private @Getter ArrayList<Proxy> proxies = new ArrayList<Proxy>();
+    private final ArrayList<URL> urls = new ArrayList<>();
+    private @Getter ArrayList<Proxy> proxies = new ArrayList<>();
 
     /**
-     * @param urls link to scrpae proxies from
-     * @throws MalformedURLException
+     * @param urls link to scrape proxies from
      */
-    public ProxyScraper(ArrayList<String> urls) throws MalformedURLException {
-        for (int i = 0; i < urls.size(); i++) {
-            this.urls.add(new URL(urls.get(i)));
+    public ProxyScraper(List<String> urls) throws MalformedURLException {
+        for (String url : urls) {
+            this.urls.add(new URL(url));
         }
     }
 

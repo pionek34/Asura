@@ -18,7 +18,7 @@ public class Join implements IMethod {
 
     @Override
     public void accept(Channel channel, Proxy proxy) {
-        service.oppnedCPS++;
+        service.openedCPS++;
         channel.writeAndFlush(Unpooled.buffer().writeBytes(handshake));
         if (usenew) {
             channel.writeAndFlush(Unpooled.buffer().writeBytes(

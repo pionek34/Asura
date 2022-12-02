@@ -15,7 +15,7 @@ public class NewLoginRequest extends DefinedPacket {
         writeVarInt(allocated.readableBytes(), wrapped);
         wrapped.writeBytes(allocated);
         byte[] bytes = new byte[wrapped.readableBytes()];
-        wrapped.getBytes(0, (byte[]) bytes);
+        wrapped.getBytes(0, bytes);
         wrapped.release();
         return bytes;
     }

