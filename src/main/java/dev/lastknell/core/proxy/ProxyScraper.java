@@ -7,7 +7,6 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,7 +15,7 @@ import lombok.Getter;
 public class ProxyScraper {
 
     private ArrayList<URL> urls = new ArrayList<URL>();
-    private @Getter HashSet<Proxy> proxies = new HashSet<Proxy>();
+    private @Getter ArrayList<Proxy> proxies = new ArrayList<Proxy>();
 
     /**
      * @param urls link to scrpae proxies from
@@ -37,7 +36,9 @@ public class ProxyScraper {
                 while ((line = read.readLine()) != null) {
                     Proxy p = getProxy(line);
                     if (p != null) {
-                        proxies.add(p);
+                        if (!proxies.contains(p)) {
+                            proxies.add(p);
+                        }
                     }
                 }
             } catch (IOException e) {
