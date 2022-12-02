@@ -8,16 +8,19 @@ import dev.lastknell.core.proxy.Proxy;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 
-public class Ping implements IMethod{
+public class Ping implements IMethod {
 
     private NettyBootstrap service;
-    private byte[] handshakebytes;
+    private byte[] handshake;
+
     @Override
     public void accept(Channel channel, Proxy proxy) {
         service.oppnedCPS++;
-        channel.writeAndFlush(Unpooled.buffer().writeBytes(this.handshakebytes));
+        channel.writeAndFlush(Unpooled.buffer().writeBytes(this.handshake));
         channel.writeAndFlush(Unpooled.buffer().writeBytes(new byte[] { 1, 0 }));
-        channel.writeAndFlush(Unpooled.buffer().writeBytes((new PingPacket(System.currentTimeMillis())).getWrappedPacket()));
+        channel.writeAndFlush(
+                Unpooled.buffer().writeBytes(
+                        PingPacket.getWrappedPacket(System.currentTimeMillis())));
         channel.close();
         service.successfulCPS++;
     }
@@ -25,7 +28,7 @@ public class Ping implements IMethod{
     @Override
     public void init(NettyBootstrap service) {
         this.service = service;
-        handshakebytes = new Handshake(service.protocolID, service.srvIp, service.port, 1).getWrappedPacket();
+        handshake = Handshake.getWrappedPacket(service.protocolID, service.srvIp, service.port, 2);
     }
 
     @Override
@@ -42,5 +45,5 @@ public class Ping implements IMethod{
     public boolean isExperimental() {
         return false;
     }
-    
+
 }

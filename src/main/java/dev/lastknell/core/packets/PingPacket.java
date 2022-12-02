@@ -4,20 +4,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 public class PingPacket extends DefinedPacket {
-    public long time;
-
-    public PingPacket(long time) {
-		this.time = time;
-	}
-
-	public void write(ByteBuf buf) {
-		buf.writeLong(this.time);
-	}
-
-    public byte[] getWrappedPacket() {
+	public static byte[] getWrappedPacket(long time) {
 		ByteBuf allocated = Unpooled.buffer();
 		allocated.writeByte(1);
-		write(allocated);
+		allocated.writeLong(time);
 		ByteBuf wrapped = Unpooled.buffer();
 		writeVarInt(allocated.readableBytes(), wrapped);
 		wrapped.writeBytes(allocated);
