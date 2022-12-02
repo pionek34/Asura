@@ -45,7 +45,7 @@ public class NettyBootstrap {
     public volatile int totalCPS = 0;
     public volatile int averageCPS = 0;
 
-    private boolean shouldStop = false;
+    public boolean shouldStop = false;
 
     // Netty related
     private EventLoopGroup loopGroup = null;
@@ -130,7 +130,7 @@ public class NettyBootstrap {
         }
     };
     // SOCKS5
-    public final ChannelInitializer<Channel> SOCKS5 = new ChannelInitializer<Channel>() {
+    private final ChannelInitializer<Channel> SOCKS5 = new ChannelInitializer<Channel>() {
         public void channelInactive(ChannelHandlerContext ctx) {
             ctx.channel().close();
         }
