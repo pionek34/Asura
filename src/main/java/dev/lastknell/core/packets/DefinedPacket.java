@@ -10,9 +10,9 @@ import io.netty.buffer.ByteBuf;
 
 public abstract class DefinedPacket {
 
-    public Charset UTF_8 = StandardCharsets.UTF_8;
+    public static Charset UTF_8 = StandardCharsets.UTF_8;
 
-    public void writeString(String s, ByteBuf buf) {
+    public static void writeString(String s, ByteBuf buf) {
         if (s.length() > 32767)
             throw new RuntimeException(
                     String.format("Cannot send string longer than Short.MAX_VALUE (got %s characters)", s.length()));
@@ -21,7 +21,7 @@ public abstract class DefinedPacket {
         buf.writeBytes(b);
     }
 
-    public void writeStringNoCap(String s, ByteBuf buf) {
+    public static void writeStringNoCap(String s, ByteBuf buf) {
         byte[] b = s.getBytes(StandardCharsets.UTF_16);
         writeVarInt(b.length, buf);
         buf.writeBytes(b);
@@ -37,7 +37,7 @@ public abstract class DefinedPacket {
         return new String(b, UTF_8);
     }
 
-    public void writeString(String s, int maxLength, ByteBuf buf) {
+    public static void writeString(String s, int maxLength, ByteBuf buf) {
         if (s.length() > maxLength)
             throw new RuntimeException(String.format("Cannot send string longer than %s (got %s characters)",
                     maxLength, s.length()));
@@ -56,7 +56,7 @@ public abstract class DefinedPacket {
         return new String(b, UTF_8);
     }
 
-    public void writeArray(byte[] b, ByteBuf buf) {
+    public static void writeArray(byte[] b, ByteBuf buf) {
         if (b.length > 32767)
             throw new RuntimeException(
                     String.format("Cannot send byte array longer than Short.MAX_VALUE (got %s bytes)",
@@ -93,7 +93,7 @@ public abstract class DefinedPacket {
         return ret;
     }
 
-    public void writeStringArray(List<String> s, ByteBuf buf) {
+    public static void writeStringArray(List<String> s, ByteBuf buf) {
         writeVarInt(s.size(), buf);
         for (String str : s)
             writeString(str, buf);
@@ -125,7 +125,7 @@ public abstract class DefinedPacket {
         throw new RuntimeException("No more bytes");
     }
 
-    public void writeVarInt(int value, ByteBuf output) {
+    public static void writeVarInt(int value, ByteBuf output) {
         do {
             int part = value & 0x7F;
             value >>>= 7;
@@ -145,7 +145,7 @@ public abstract class DefinedPacket {
         return (high & 0xFF) << 15 | low;
     }
 
-    public void writeVarShort(ByteBuf buf, int toWrite) {
+    public static void writeVarShort(ByteBuf buf, int toWrite) {
         int low = toWrite & 0x7FFF;
         int high = (toWrite & 0x7F8000) >> 15;
         if (high != 0)
@@ -155,7 +155,7 @@ public abstract class DefinedPacket {
             buf.writeByte(high);
     }
 
-    public void writeUUID(UUID value, ByteBuf output) {
+    public static void writeUUID(UUID value, ByteBuf output) {
         output.writeLong(value.getMostSignificantBits());
         output.writeLong(value.getLeastSignificantBits());
     }
@@ -164,11 +164,11 @@ public abstract class DefinedPacket {
         return new UUID(input.readLong(), input.readLong());
     }
 
-    public void read(ByteBuf buf) {
+    public static void read(ByteBuf buf) {
         throw new UnsupportedOperationException("Packet must implement read method");
     }
 
-    public void write(ByteBuf buf) {
+    public static void write(ByteBuf buf) {
         throw new UnsupportedOperationException("Packet must implement write method");
     }
 }

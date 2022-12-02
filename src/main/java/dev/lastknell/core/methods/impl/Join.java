@@ -4,6 +4,7 @@ import dev.lastknell.core.NettyBootstrap;
 import dev.lastknell.core.methods.IMethod;
 import dev.lastknell.core.packets.Handshake;
 import dev.lastknell.core.packets.LoginRequest;
+import dev.lastknell.core.packets.NewLoginRequest;
 import dev.lastknell.core.proxy.Proxy;
 import dev.lastknell.core.utils.RandomUtils;
 import io.netty.buffer.Unpooled;
@@ -12,14 +13,20 @@ import io.netty.channel.Channel;
 public class Join implements IMethod {
 
     NettyBootstrap service;
+    private byte[] handshake;
+    private boolean usenew = false;
 
-    private Handshake handshake;
-  
     @Override
     public void accept(Channel channel, Proxy proxy) {
         service.oppnedCPS++;
-        channel.writeAndFlush(Unpooled.buffer().writeBytes(handshake.getWrappedPacket()));
-        channel.writeAndFlush(Unpooled.buffer().writeBytes((new LoginRequest(RandomUtils.randomString(8))).getWrappedPacket()));
+        channel.writeAndFlush(Unpooled.buffer().writeBytes(handshake));
+        if (usenew) {
+            channel.writeAndFlush(Unpooled.buffer().writeBytes(
+                    NewLoginRequest.getWrappedPacket(RandomUtils.randomString(12))));
+        } else {
+            channel.writeAndFlush(Unpooled.buffer().writeBytes(
+                    LoginRequest.getWrappedPacket(RandomUtils.randomString(12))));
+        }
         service.successfulCPS++;
     }
 
@@ -41,7 +48,10 @@ public class Join implements IMethod {
     @Override
     public void init(NettyBootstrap service) {
         this.service = service;
-        handshake = new Handshake(service.protocolID, service.srvIp, service.port, 2);
+        handshake = Handshake.getWrappedPacket(service.protocolID, service.srvIp, service.port, 2);
+        if (service.protocolID > 758) {
+            usenew = true;
+        }
     }
-    
+
 }
