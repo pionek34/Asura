@@ -53,15 +53,17 @@ public class ProxyScraper {
     public static Proxy getProxy(String line) {
         Proxy p = null;
         String[] parts = line.split(":");
-        if (parts.length == 2) {
-            if (isValidIPAddress(parts[0]) && Integer.parseInt(parts[1]) < 65535 && Integer.parseInt(parts[1]) > 0) {
-                p = new Proxy(new InetSocketAddress(parts[0], Integer.parseInt(parts[1])));
-            }
-        }
-        if (parts.length == 4) {
-            if (isValidIPAddress(parts[0]) && Integer.parseInt(parts[1]) < 65535 && Integer.parseInt(parts[1]) > 0) {
-                p = new Proxy(new InetSocketAddress(parts[0], Integer.parseInt(parts[1])), parts[2], parts[3]);
-            }
+        switch (parts.length) {
+            case 2:
+                if (isValidIPAddress(parts[0]) && Integer.parseInt(parts[1]) < 65535 && Integer.parseInt(parts[1]) > 0) {
+                    p = new Proxy(new InetSocketAddress(parts[0], Integer.parseInt(parts[1])), null, null);
+                }
+                break;
+            case 4:
+                if (isValidIPAddress(parts[0]) && Integer.parseInt(parts[1]) < 65535 && Integer.parseInt(parts[1]) > 0) {
+                    p = new Proxy(new InetSocketAddress(parts[0], Integer.parseInt(parts[1])), parts[2], parts[3]);
+                }
+                break;
         }
         return p;
     }
