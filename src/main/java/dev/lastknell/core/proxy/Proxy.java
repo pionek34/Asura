@@ -24,17 +24,6 @@ public class Proxy {
      */
     private final boolean requiresAuth;
 
-    /**
-     * Creates a new proxy with the given address.
-     *
-     * @param address the address of the proxy server
-     */
-    public Proxy(InetSocketAddress address) {
-        this.address = address;
-        this.email = null;
-        this.pw = null;
-        this.requiresAuth = false;
-    }
 
     /**
      * Creates a new proxy with the given address and authentication details.
@@ -47,7 +36,7 @@ public class Proxy {
         this.address = address;
         this.email = email;
         this.pw = pw;
-        this.requiresAuth = true;
+        this.requiresAuth = (email != null && pw != null) ? true : false;
     }
 
     /**

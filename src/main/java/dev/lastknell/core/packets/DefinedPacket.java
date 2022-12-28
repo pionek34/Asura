@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public abstract class DefinedPacket {
 
-    public static Charset UTF_8 = StandardCharsets.UTF_8;
+    public static Charset UTF_8 = Charset.forName("UTF-8");
 
     public static void writeString(String s, ByteBuf buf) {
         if (s.length() > 32767)
@@ -22,7 +22,7 @@ public abstract class DefinedPacket {
     }
 
     public static void writeStringNoCap(String s, ByteBuf buf) {
-        byte[] b = s.getBytes(StandardCharsets.UTF_16);
+        byte[] b = s.getBytes(Charset.forName("UTF_16"));
         writeVarInt(b.length, buf);
         buf.writeBytes(b);
     }
@@ -146,13 +146,10 @@ public abstract class DefinedPacket {
     }
 
     public static void writeVarShort(ByteBuf buf, int toWrite) {
-        int low = toWrite & 0x7FFF;
-        int high = (toWrite & 0x7F8000) >> 15;
-        if (high != 0)
-            low |= 0x8000;
-        buf.writeShort(low);
-        if (high != 0)
-            buf.writeByte(high);
+        buf.writeShort(toWrite & 0x7FFF);
+        if ((toWrite & 0x7F8000) != 0) {
+            buf.writeByte((toWrite & 0x7F8000) >> 15);
+        }
     }
 
     public static void writeUUID(UUID value, ByteBuf output) {

@@ -16,6 +16,13 @@ public class Join implements IMethod {
     private byte[] handshake;
     private boolean usenew = false;
 
+    private void initVariables() {
+        handshake = Handshake.getWrappedPacket(service.protocolID, service.srvIp, service.port, 2);
+        if (service.protocolID > 758) {
+            usenew = true;
+        }
+    }
+
     @Override
     public void accept(Channel channel, Proxy proxy) {
         service.openedCPS++;
@@ -48,10 +55,7 @@ public class Join implements IMethod {
     @Override
     public void init(NettyBootstrap service) {
         this.service = service;
-        handshake = Handshake.getWrappedPacket(service.protocolID, service.srvIp, service.port, 2);
-        if (service.protocolID > 758) {
-            usenew = true;
-        }
+        initVariables();
     }
 
 }
