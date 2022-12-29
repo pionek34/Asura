@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 public class ProxyScraper {
 
     private final ArrayList<URL> urls = new ArrayList<>();
-    private @Getter ArrayList<Proxy> proxies = new ArrayList<>();
+    private ArrayList<Proxy> proxies = new ArrayList<>();
 
     /**
      * @param urls link to scrape proxies from
@@ -91,4 +91,9 @@ public class ProxyScraper {
         Matcher matcher = p.matcher(ip);
         return matcher.matches();
     }
+
+    public ArrayList<Proxy> getProxies() {
+        return proxies;
+    }
+
 }
