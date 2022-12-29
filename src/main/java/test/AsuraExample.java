@@ -64,7 +64,7 @@ public class AsuraExample {
                 .delay(delay)
                 .perDelay(perDelay)
                 .build();
-
+        bootstrap.start();
         while (!bootstrap.shouldStop) {
             System.out.println("Average CPS " + bootstrap.averageCPS + " TriedCPS " + bootstrap.triedCPS + " successfulCPS " + bootstrap.successfulCPS);
             try {
