@@ -20,12 +20,11 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.ThreadFactory;
 
 public class NettyBootstrap {
+    // Netty related
+    public static Class<? extends Channel> socketChannel;
     public final int protocolID;
     public final String srvIp;
     public final int port;
-
-    // Netty related
-    public static Class<? extends Channel> socketChannel;
     private final ChannelHandler TAIL = new ChannelHandler() {
         @Override
         public void handlerAdded(ChannelHandlerContext ctx) {
@@ -42,6 +41,12 @@ public class NettyBootstrap {
             ctx.close();
         }
     };
+    private final EventLoopGroup eventLoopGroup;
+    // BOOTSTRAP
+    private final Bootstrap BOOTSTRAP;
+    public Builder builder;
+    //CPS AND STUFF
+    public volatile int triedCPS = 0;
     // ChannelInitializer with HTTP proxy
     private final ChannelInitializer<Channel> HTTP = new ChannelInitializer<>() {
         @Override
@@ -54,13 +59,15 @@ public class NettyBootstrap {
             try {
                 final Proxy proxy = builder.proxyManager.getProxy();
                 final HttpProxyHandler s = (proxy.requiresAuthentication()) ? new HttpProxyHandler(proxy.getAddress(), proxy.getEmail(), proxy.getPassword()) : new HttpProxyHandler(proxy.getAddress());
-                s.setConnectTimeoutMillis(5000L);
+                s.setConnectTimeoutMillis(builder.timeout);
                 s.connectFuture().addListener(f -> {
                     if (f.isSuccess() && s.isConnected()) {
                         triedCPS++;
                         builder.method.accept(c, proxy);
                     } else {
-                        builder.proxyManager.removeProxy(proxy);
+                        if (builder.removeFailedProxy) {
+                            builder.proxyManager.removeProxy(proxy);
+                        }
                         c.close();
                     }
                 });
@@ -92,13 +99,15 @@ public class NettyBootstrap {
                 } else {
                     s = new Socks4ProxyHandler(proxy.getAddress());
                 }
-                s.setConnectTimeoutMillis(5000L);
+                s.setConnectTimeoutMillis(builder.timeout);
                 s.connectFuture().addListener(f -> {
                     if (f.isSuccess() && s.isConnected()) {
                         triedCPS++;
                         builder.method.accept(c, proxy);
                     } else {
-                        builder.proxyManager.removeProxy(proxy);
+                        if (builder.removeFailedProxy) {
+                            builder.proxyManager.removeProxy(proxy);
+                        }
                         c.close();
                     }
                 });
@@ -125,13 +134,15 @@ public class NettyBootstrap {
             try {
                 final Proxy proxy = builder.proxyManager.getProxy();
                 final Socks5ProxyHandler s = (proxy.requiresAuthentication()) ? new Socks5ProxyHandler(proxy.getAddress(), proxy.getEmail(), proxy.getPassword()) : new Socks5ProxyHandler(proxy.getAddress());
-                s.setConnectTimeoutMillis(5000L);
+                s.setConnectTimeoutMillis(builder.timeout);
                 s.connectFuture().addListener(f -> {
                     if (f.isSuccess() && s.isConnected()) {
                         triedCPS++;
                         builder.method.accept(c, proxy);
                     } else {
-                        builder.proxyManager.removeProxy(proxy);
+                        if (builder.removeFailedProxy) {
+                            builder.proxyManager.removeProxy(proxy);
+                        }
                         c.close();
                     }
                 });
@@ -146,12 +157,6 @@ public class NettyBootstrap {
             ctx.close();
         }
     };
-    private final EventLoopGroup eventLoopGroup;
-    // BOOTSTRAP
-    private final Bootstrap BOOTSTRAP;
-    public Builder builder;
-    //CPS AND STUFF
-    public volatile int triedCPS = 0;
     public volatile int openedCPS = 0;
     public volatile int successfulCPS = 0;
     public volatile int totalConnections = 0;
@@ -237,25 +242,27 @@ public class NettyBootstrap {
         private final IMethod method;
         private final String srvIp;
         private final int port;
-        private int protocolID;
-        private int duration;
-        private int perDelay;
-        private int delay;
-        private int connectLoopThreads;
-        private int workerThreads;
-        private ProxyType proxyType;
-        private boolean usingEpoll;
-        private ProxyManager proxyManager;
+        private final int protocolID;
+        private final int duration;
+        private final int timeout = 5000;
+        private final ProxyType proxyType;
+        private int perDelay = 1000;
+        private int delay = 0;
+        private int connectLoopThreads = 1;
+        private int workerThreads = 3;
+        private boolean usingEpoll = false;
+        private final ProxyManager proxyManager;
 
-        public Builder(IMethod method, String srvIp, int port) {
+        private boolean removeFailedProxy = true;
+
+        public Builder(IMethod method, String srvIp, int port, int protocolID, int duration, ProxyType proxyType, ProxyManager proxyManager) {
             this.method = method;
             this.srvIp = srvIp;
             this.port = port;
-        }
-
-        public Builder duration(int duration) {
+            this.proxyManager = proxyManager;
+            this.proxyType = proxyType;
+            this.protocolID = protocolID;
             this.duration = duration;
-            return this;
         }
 
         public Builder perDelay(int perDelay) {
@@ -265,11 +272,6 @@ public class NettyBootstrap {
 
         public Builder connectLoopThreads(int connectLoopThreads) {
             this.connectLoopThreads = connectLoopThreads;
-            return this;
-        }
-
-        public Builder protocolID(int protocolID) {
-            this.protocolID = protocolID;
             return this;
         }
 
@@ -288,13 +290,8 @@ public class NettyBootstrap {
             return this;
         }
 
-        public Builder proxyType(ProxyType proxyType) {
-            this.proxyType = proxyType;
-            return this;
-        }
-
-        public Builder proxyManager(ProxyManager proxyManager) {
-            this.proxyManager = proxyManager;
+        public Builder removeFailedProxy(boolean removeFailedProxy) {
+            this.removeFailedProxy = removeFailedProxy;
             return this;
         }
 
