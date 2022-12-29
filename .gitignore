@@ -1,6 +1,6 @@
-.gradle
-.vscode
-bin
-build
-.idea
-out
+.gradle/
+.vscode/
+bin/
+build/
+.idea/
+out/
