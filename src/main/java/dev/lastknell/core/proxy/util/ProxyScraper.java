@@ -10,7 +10,11 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,44 +33,53 @@ public class ProxyScraper {
     }
 
     public void scrape() {
+        ExecutorService executorService = Executors.newFixedThreadPool(urls.size());
 
-        urls.forEach(url -> {
+        urls.forEach(url -> executorService.submit(() ->{
             try {
                 BufferedReader read = new BufferedReader(new InputStreamReader(url.openStream()));
                 String line;
                 while ((line = read.readLine()) != null) {
                     Proxy p = getProxy(line);
-                    if (p != null) {
-                        if (!proxies.contains(p)) {
-                            proxies.add(p);
-                        }
+                    if (p != null && !proxies.contains(p)) {
+                            synchronized (this) {
+                                proxies.add(p);
+                            }
                     }
                 }
+                read.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-        });
+        }));
+
+        executorService.shutdown();
 
     }
 
     public static Proxy getProxy(String line) {
         Proxy p = null;
-        String[] parts = line.split(":");
-        switch (parts.length) {
-            case 2:
-                if (isValidIPAddress(parts[0]) && Integer.parseInt(parts[1]) < 65535 && Integer.parseInt(parts[1]) > 0) {
-                    p = new Proxy(new InetSocketAddress(parts[0], Integer.parseInt(parts[1])), null, null);
-                }
-                break;
-            case 4:
-                if (isValidIPAddress(parts[0]) && Integer.parseInt(parts[1]) < 65535 && Integer.parseInt(parts[1]) > 0) {
-                    p = new Proxy(new InetSocketAddress(parts[0], Integer.parseInt(parts[1])), parts[2], parts[3]);
-                }
-                break;
+        try {
+            String[] parts = line.split(":");
+            switch (parts.length) {
+                case 2:
+                    if (isValidIPAddress(parts[0]) && Integer.parseInt(parts[1]) < 65535 && Integer.parseInt(parts[1]) > 0) {
+                        p = new Proxy(new InetSocketAddress(parts[0], Integer.parseInt(parts[1])), null, null);
+                    }
+                    break;
+                case 4:
+                    if (isValidIPAddress(parts[0]) && Integer.parseInt(parts[1]) < 65535 && Integer.parseInt(parts[1]) > 0) {
+                        p = new Proxy(new InetSocketAddress(parts[0], Integer.parseInt(parts[1])), parts[2], parts[3]);
+                    }
+                    break;
+            }
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
         }
         return p;
     }
+
 
     public static boolean isValidIPAddress(String ip) {
         String zeroTo255 = "(\\d{1,2}|(0|1)\\" + "d{2}|2[0-4]\\d|25[0-5])";

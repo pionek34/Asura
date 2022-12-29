@@ -22,7 +22,7 @@ public abstract class DefinedPacket {
     }
 
     public static void writeStringNoCap(String s, ByteBuf buf) {
-        byte[] b = s.getBytes(Charset.forName("UTF_16"));
+        byte[] b = s.getBytes(Charset.forName("UTF-16"));
         writeVarInt(b.length, buf);
         buf.writeBytes(b);
     }
@@ -114,7 +114,7 @@ public abstract class DefinedPacket {
     public int readVarInt(ByteBuf input, int maxBytes) {
         int out = 0;
         int bytes = 0;
-        while (input.readableBytes() != 0) {
+        while (input.readableBytes() != 0 && maxBytes > 0) {
             byte in = input.readByte();
             out |= (in & Byte.MAX_VALUE) << bytes++ * 7;
             if (bytes > maxBytes)
@@ -126,13 +126,15 @@ public abstract class DefinedPacket {
     }
 
     public static void writeVarInt(int value, ByteBuf output) {
-        do {
-            int part = value & 0x7F;
+        int part;
+        while (value != 0) {
+            part = value & 0x7F;
             value >>>= 7;
-            if (value != 0)
+            if (value != 0) {
                 part |= 0x80;
+            }
             output.writeByte(part);
-        } while (value != 0);
+        }
     }
 
     public int readVarShort(ByteBuf buf) {
