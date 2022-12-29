@@ -56,7 +56,7 @@ public class AsuraExample {
         boolean usingEpoll = Boolean.parseBoolean(args[9]);
         boolean remove = Boolean.parseBoolean(args[10]);
 
-        NettyBootstrap nettyBootstrap = new NettyBootstrap.Builder(method, ip, port, protocol, duration, proxyType, proxyManager)
+        NettyBootstrap bootstrap = new NettyBootstrap.Builder(method, ip, port, protocol, duration, proxyType, proxyManager)
                 .usingEpoll(usingEpoll)
                 .removeFailedProxy(remove)
                 .connectLoopThreads(loopThreads)
@@ -65,6 +65,14 @@ public class AsuraExample {
                 .perDelay(perDelay)
                 .build();
 
+        while (!bootstrap.shouldStop) {
+            System.out.println("Average CPS " + bootstrap.averageCPS + " TriedCPS " + bootstrap.triedCPS + " successfulCPS " + bootstrap.successfulCPS);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private static void CLI() {
