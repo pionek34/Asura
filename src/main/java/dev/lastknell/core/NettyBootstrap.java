@@ -17,9 +17,6 @@ import io.netty.util.ResourceLeakDetector;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
-import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
 public class NettyBootstrap {
@@ -210,7 +207,6 @@ public class NettyBootstrap {
                 successfulCPS = 0;
                 triedCPS = 0;
                 averageCPS = totalConnections / elapsed;
-                System.out.println(averageCPS);
             }
         }).start();
 

