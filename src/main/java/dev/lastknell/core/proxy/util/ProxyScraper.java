@@ -55,7 +55,9 @@ public class ProxyScraper {
         }));
 
         executorService.shutdown();
+        while (!executorService.isTerminated()){
 
+        }
     }
 
     public static Proxy getProxy(String line) {

