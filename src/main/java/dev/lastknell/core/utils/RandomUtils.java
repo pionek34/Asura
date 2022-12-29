@@ -43,11 +43,10 @@ public final class RandomUtils {
     }
 
     public static String random(int length, char[] chars) {
-        StringBuilder stringBuilder = new StringBuilder();
-        int i = 0;
-        while (i < length) {
-            stringBuilder.append(chars[(new Random()).nextInt(chars.length)]);
-            i++;
+        Random random = new Random();
+        StringBuilder stringBuilder = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            stringBuilder.append(chars[random.nextInt(chars.length)]);
         }
         return stringBuilder.toString();
     }
