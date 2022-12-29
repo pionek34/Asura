@@ -1,3 +1,5 @@
-/.gradle
-/.vscode
-/bin
+.gradle
+.vscode
+bin
+build
+.idea
