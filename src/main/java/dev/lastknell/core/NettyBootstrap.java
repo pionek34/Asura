@@ -17,8 +17,12 @@ import io.netty.util.ResourceLeakDetector;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 public class NettyBootstrap {
     public static Class<? extends Channel> socketChannel;
@@ -62,26 +66,19 @@ public class NettyBootstrap {
         this.port = builder.port;
         this.protocolID = builder.protocolID;
         this.builder = builder;
+        socketChannel = builder.usingEpoll ? EpollSocketChannel.class : NioSocketChannel.class;
 
-        if (builder.usingEpoll) {
 
-            socketChannel = EpollSocketChannel.class;
-            eventLoopGroup = new EpollEventLoopGroup(builder.workerThreads, r -> {
-                Thread t = new Thread(r);
-                t.setDaemon(true);
-                t.setPriority(5);
-                return t;
-            });
+        ThreadFactory threadFactory = r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            t.setPriority(builder.usingEpoll ? 5 : 10);
+            return t;
+        };
 
-        } else {
-            socketChannel = NioSocketChannel.class;
-            eventLoopGroup = new NioEventLoopGroup(builder.workerThreads, r -> {
-                Thread t = new Thread(r);
-                t.setDaemon(true);
-                t.setPriority(10);
-                return t;
-            });
-        }
+        eventLoopGroup = builder.usingEpoll ? new EpollEventLoopGroup(builder.workerThreads, threadFactory) : new NioEventLoopGroup(builder.workerThreads, threadFactory);
+
+        //
         BOOTSTRAP = new Bootstrap().channel(socketChannel).group(eventLoopGroup).option(ChannelOption.TCP_NODELAY, Boolean.TRUE).option(ChannelOption.AUTO_READ, Boolean.TRUE);
         // ChannelInitializer with HTTP proxy
         ChannelInitializer<Channel> HTTP = new ChannelInitializer<>() {
@@ -301,9 +298,12 @@ public class NettyBootstrap {
     }
 
     private class connectLoopThread implements Runnable {
+
+        //Better work outside the loop
+        final InetSocketAddress addr = new InetSocketAddress(builder.srvIp, builder.port);
+
         @Override
         public void run() {
-            InetSocketAddress addr = new InetSocketAddress(builder.srvIp, builder.port);
             while (!shouldStop) {
                 for (int j = 0; j < builder.perDelay; j++) {
                     BOOTSTRAP.connect(addr);
