@@ -18,15 +18,22 @@ import java.util.ArrayList;
 public class AsuraTest {
     public static void main(String[] args) {
         //Make NettyBootStrap/s
-        NettyBootstrap bootstraps4 = new NettyBootstrap(true, Integer.parseInt(args[8]));
+        NettyBootstrap bootstraps4 = new NettyBootstrap(true, Integer.parseInt(args[7]));
         bootstraps4.bootstrap.handler(new SOCKS4ProxyHandler(S4ProxyManager(), 10000, true).getSOCKS4());
-        NettyBootstrap bootstraps5 = new NettyBootstrap(true, Integer.parseInt(args[8]));
+        NettyBootstrap bootstraps5 = new NettyBootstrap(true, Integer.parseInt(args[7]));
         bootstraps5.bootstrap.handler(new SOCKS5ProxyHandler(S5ProxyManager(), 10000, true).getSOCKS5());
-        NettyBootstrap bootstraphttp = new NettyBootstrap(true, Integer.parseInt(args[8]));
+        NettyBootstrap bootstraphttp = new NettyBootstrap(true, Integer.parseInt(args[7]));
         bootstraphttp.bootstrap.handler(new HTTPProxyHandler(HTTPProxyManager(), 10000, true).getHTTP());
 
         //Make AttackConfig
-        AttackConfig config = new AttackConfig(args[0], Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]), Integer.parseInt(args[7]), bootstraphttp.bootstrap, Integer.parseInt(args[5]), Integer.parseInt(args[6]));
+        AttackConfig config = new AttackConfig(args[0],
+                Integer.parseInt(args[1]),
+                Integer.parseInt(args[2]),
+                Integer.parseInt(args[3]),
+                Integer.parseInt(args[4]),
+                Integer.parseInt(args[5]),
+                Integer.parseInt(args[6]),
+                bootstraphttp.bootstrap);
         config.addBootstrap(bootstraps4.bootstrap);
         config.addBootstrap(bootstraps5.bootstrap);
 

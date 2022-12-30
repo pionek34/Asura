@@ -14,7 +14,7 @@ public class AttackConfig {
     public final int delay;
     public final int connectionsPerDelay;
 
-    public AttackConfig(String srvIp, int port, int protocolID, int duration, int loopThreads, Bootstrap bootstrap, int delay, int connectionsPerDelay) {
+    public AttackConfig(String srvIp, int port, int protocolID, int duration, int loopThreads, int delay, int connectionsPerDelay, Bootstrap bootstrap) {
         this.protocolID = protocolID;
         this.srvIp = srvIp;
         this.port = port;
