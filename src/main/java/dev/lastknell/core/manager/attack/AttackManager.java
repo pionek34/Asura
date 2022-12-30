@@ -10,14 +10,12 @@ import java.util.ArrayList;
 public class AttackManager {
     public static ArrayList<iAttackMethod> methods = new ArrayList<>();
 
-    public static ConnectionsInfo startAttack(iAttackMethod method, AttackConfig config) {
-        ConnectionsInfo info = new ConnectionsInfo();
+    public static void startAttack(iAttackMethod method, AttackConfig config, ConnectionsInfo info) {
         methods.add(method);
         Thread thread = new Thread(new AttackHandlerThread(config, info, method));
         thread.setName("Attack Thread");
         thread.setDaemon(true);
         thread.setPriority(5);
         thread.start();
-        return info;
     }
 }

