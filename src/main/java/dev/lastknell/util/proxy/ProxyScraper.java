@@ -1,4 +1,4 @@
-package dev.lastknell.core.proxy.util;
+package dev.lastknell.util.proxy;
 
 import dev.lastknell.core.proxy.Proxy;
 import lombok.Getter;
@@ -10,9 +10,7 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
@@ -21,7 +19,7 @@ import java.util.regex.Pattern;
 public class ProxyScraper {
 
     private final ArrayList<URL> urls = new ArrayList<>();
-    private @Getter ArrayList<Proxy> proxies = new ArrayList<>();
+    private final @Getter ArrayList<Proxy> proxies = new ArrayList<>();
 
     /**
      * @param urls link to scrape proxies from

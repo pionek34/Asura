@@ -1,4 +1,4 @@
-package dev.lastknell.core.proxy.util;
+package dev.lastknell.core.proxy;
 
 public enum ProxyType {
     SOCKS4,

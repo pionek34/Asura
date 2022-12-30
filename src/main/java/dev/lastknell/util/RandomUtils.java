@@ -1,4 +1,4 @@
-package dev.lastknell.core.utils;
+package dev.lastknell.util;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
