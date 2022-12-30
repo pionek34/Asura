@@ -28,7 +28,7 @@ public class HTTPProxyHandler {
         }
     };
 
-    public HTTPProxyHandler(AttackChannelHandler handler, ProxyManager proxyManager, int timeout, boolean removeFailedProxy) {
+    public HTTPProxyHandler(ProxyManager proxyManager, int timeout, boolean removeFailedProxy) {
         HTTP = new ChannelInitializer<>() {
             @Override
             public void channelInactive(@NotNull ChannelHandlerContext ctx) {
@@ -48,7 +48,7 @@ public class HTTPProxyHandler {
                     s.setConnectTimeoutMillis(timeout);
                     s.connectFuture().addListener(f -> {
                         if(f.isSuccess() && s.isConnected()) {
-                            handler.acceptChannel(channel, proxy);
+                            AttackChannelHandler.acceptChannel(channel, proxy);
                         } else {
                             if(removeFailedProxy) {
                                 proxyManager.removeProxy(proxy);

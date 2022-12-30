@@ -8,13 +8,7 @@ import io.netty.channel.Channel;
 import java.util.ArrayList;
 
 public class AttackChannelHandler {
-    private final AttackManager manager;
-
-    public AttackChannelHandler(AttackManager manager) {
-        this.manager = manager;
-    }
-
-    public void acceptChannel(Channel channel, Proxy proxy) {
+    public static void acceptChannel(Channel channel, Proxy proxy) {
         ArrayList<iAttackMethod> methods = AttackManager.methods;
         for (iAttackMethod method : methods) {
             method.accept(channel, proxy);

@@ -28,7 +28,7 @@ public class SOCKS4ProxyHandler {
         }
     };
 
-    public SOCKS4ProxyHandler(AttackChannelHandler handler, ProxyManager proxyManager, int timeout, boolean removeFailedProxy) {
+    public SOCKS4ProxyHandler(ProxyManager proxyManager, int timeout, boolean removeFailedProxy) {
         SOCKS4 = new ChannelInitializer<>() {
             @Override
             public void channelInactive(@NotNull ChannelHandlerContext ctx) {
@@ -48,7 +48,7 @@ public class SOCKS4ProxyHandler {
                     s.setConnectTimeoutMillis(timeout);
                     s.connectFuture().addListener(f -> {
                         if(f.isSuccess() && s.isConnected()) {
-                            handler.acceptChannel(channel, proxy);
+                            AttackChannelHandler.acceptChannel(channel, proxy);
                         } else {
                             if(removeFailedProxy) {
                                 proxyManager.removeProxy(proxy);

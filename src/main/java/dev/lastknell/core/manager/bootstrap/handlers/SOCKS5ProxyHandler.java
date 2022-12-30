@@ -28,7 +28,7 @@ public class SOCKS5ProxyHandler {
         }
     };
 
-    public SOCKS5ProxyHandler(AttackChannelHandler handler, ProxyManager proxyManager, int timeout, boolean removeFailedProxy) {
+    public SOCKS5ProxyHandler(ProxyManager proxyManager, int timeout, boolean removeFailedProxy) {
         SOCKS5 = new ChannelInitializer<>() {
             @Override
             public void channelInactive(@NotNull ChannelHandlerContext ctx) {
@@ -48,7 +48,7 @@ public class SOCKS5ProxyHandler {
                     s.setConnectTimeoutMillis(timeout);
                     s.connectFuture().addListener(f -> {
                         if(f.isSuccess() && s.isConnected()) {
-                            handler.acceptChannel(channel, proxy);
+                            AttackChannelHandler.acceptChannel(channel, proxy);
                         } else {
                             if(removeFailedProxy) {
                                 proxyManager.removeProxy(proxy);
