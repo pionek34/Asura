@@ -22,7 +22,7 @@ public class AttackHandlerThread implements Runnable {
             Thread t = new Thread(new LoopThread(addr));
             t.setDaemon(true);
             t.setName("LoopThread");
-            t.setPriority(15);
+            t.setPriority(10);
             t.start();
         }
         this.info = info;
